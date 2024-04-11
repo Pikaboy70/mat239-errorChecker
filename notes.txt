@@ -1,0 +1,7 @@
+Error checking process
+1. Generate messages, 8-bit number (10k count)
+2. Add all messages to one list
+3. Create checksum for message
+4. Attach ack bit and checksum to message, total 10-bits
+5. Send message through noisy channel, flip bits at random, % chance of flip is random int 0-100
+6. Receive jumbled message from noisy channel

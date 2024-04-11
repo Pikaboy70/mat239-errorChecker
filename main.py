@@ -5,16 +5,14 @@ import receiver
 import transmitter
 
 
+# TODO: Create ErrorChecker class if time permits
 def main():
-    num = transmitter.generateMessage()
-    checksum, num = transmitter.createChecksum(num)
-    message = transmitter.prepareMessage(num, checksum)
-    print(f"Original message: {message}")
-    garbledMessage = noisyChannel.bitFlipper(message)
-    print(f"Message received: {garbledMessage}")
-    goodMessage = receiver.analyzeMessage(garbledMessage)
+    nums: list[str] = transmitter.generateMessages()
+    nums = transmitter.createChecksums(nums)
+    garbledMessages = noisyChannel.bitFlipper(nums)
+    goodMessage = receiver.analyzeMessages(garbledMessages)
     print(f"Good message? {goodMessage}")
 
 
 if __name__ == "__main__":
-    main()
+    main()  # Do not run, might return something but will be far from correct
