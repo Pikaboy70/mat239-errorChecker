@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 __author__ = "Sam Danforth"
-
 from random import randint
 
 
 class ErrorChecker(object):
+
+    # Generate report for error checking
     @staticmethod
     def calculateSuccess():
         print(f"Noise level used: {NoisyChannel.noiseLevel}%\n")
@@ -29,36 +30,37 @@ class Transmitter(ErrorChecker):
             message = randint(0, 255)  # Choose random 8-bit binary number (integer from 0-255)
             # Remove extra characters added by binary conversion and fill with leading zeros
             message = bin(message).replace("0b", "").zfill(8)
-            Transmitter.generatedMessages.append(message)
+            Transmitter.generatedMessages.append(message)  # Add to list of pre-checksum messages
         return Transmitter.generatedMessages
 
     @staticmethod
     def creatChecksums(messages: list[str]):
         checksum: bool
         for msg in messages:  # Iterate through message list
-            checksum = Transmitter.createChecksumSingle(msg)
+            checksum = Transmitter.createChecksumSingle(msg)  # Call checksum creation function for each message
             if checksum:
-                msg = msg + "01"
+                msg = msg + "01"  # Checksum of 1 for true
             else:
-                msg = msg + "00"
-            Transmitter.preppedMessages.append(msg)
+                msg = msg + "00"  # Checksum of 0 for false
+            # Also add ack bit of 0 before checksum
+            Transmitter.preppedMessages.append(msg)  # Add appended message to a list of known good messages
         return Transmitter.preppedMessages
 
     @staticmethod
-    def createChecksumSingle(message: str):
+    def createChecksumSingle(message: str):  # Create checksum for a single binary message
         count: int = 0
         checksum: bool
+        # Count the number of 1s in the message
         for char in message:
             if char == "1":
                 count += 1
             elif char != "0":
                 raise ValueError("Message contains non-binary data")
-        if count % 2 == 1:
+        if count % 2 == 1:  # Basically check if count is even or not
             return False
         elif count % 2 == 0:
             return True
 
-    # TODO: Fix recursion error, find cause
     @staticmethod
     def getNewMessage(index: int):
         message = Transmitter.preppedMessages[index]
@@ -79,8 +81,7 @@ class NoisyChannel(ErrorChecker):
         noiseLevel = NoisyChannel.noiseLevel
         garbledMessages: list[str] = []
         for msg in messages:
-            garbledMessage = NoisyChannel.bitFlipperSingle(msg, noiseLevel)
-            # Join modded character list with empty string to create new message
+            garbledMessage = NoisyChannel.bitFlipperSingle(msg, noiseLevel)  # Run every message through bit flipper
             garbledMessages.append(garbledMessage)  # Add to edited messages list
         return garbledMessages
 
@@ -99,6 +100,7 @@ class NoisyChannel(ErrorChecker):
                     raise ValueError("Message contains non-binary data.")
             index += 1
         garbledMessage = ''.join(charList)
+        # Join modded character list with empty string to create new message
         return garbledMessage
 
 
