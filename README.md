@@ -35,9 +35,9 @@ rounded to three decimal places.
 
 How to use the program:
 
-Everything runs from [main.py](main.py) as errorChecker.py is a class library. The [main.py](main.py) file is already set up with a `main()` 
-function which runs all necessary methods from the `ErrorChecker` class in the correct order. The first line of `main()`
-will call `Transmitter.generateMessages()`, which can be given any positive integer of your choosing or left blank to use
-the default value. The third line of `main()` will call `NoisyChannel.setNoiseLevel()`, which can be given any integer 0 
-through 100 or left blank to choose random. Only `generateMessages()` and `setNoiseLevel()` should have their inputs 
-modified if desired.
+Everything runs from [main.py](main.py) as [errorChecker.py](errorChecker.py) is a class library. The [main.py](main.py)
+file is already set up with a `main()`function which runs all necessary methods from the `ErrorChecker` class in the 
+correct order. The first line of `main()`will call `Transmitter.generateMessages()`, which can be given any positive 
+integer of your choosing or left blank to use the default value. The third line of `main()` will call 
+`NoisyChannel.setNoiseLevel()`, which can be given any integer 0 through 100 or left blank to choose random. Only 
+`generateMessages()` and `setNoiseLevel()` should have their inputs modified if desired.
