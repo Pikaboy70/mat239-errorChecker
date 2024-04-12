@@ -11,7 +11,6 @@ def main():
     messagesToSend = NoisyChannel.bitFlipper(messages)
     Receiver.analyzeMessages(messagesToSend)
     ErrorChecker.calculateSuccess()
-    pass
 
 
 if __name__ == "__main__":

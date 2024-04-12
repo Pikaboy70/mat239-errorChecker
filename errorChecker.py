@@ -7,9 +7,10 @@ from random import randint
 class ErrorChecker(object):
     @staticmethod
     def calculateSuccess():
-        print(f"Noise level used: {NoisyChannel.noiseLevel}%")
+        print(f"Noise level used: {NoisyChannel.noiseLevel}%\n")
         print(f"Number of bad messages detected: {Receiver.failCount}")
-        print(f"Total number of messages generated: {Transmitter.messageCount}")
+        print(f"Number of accepted messages: {len(Receiver.acceptedMessages)}")
+        print(f"Total number of messages generated: {Transmitter.messageCount}\n")
         failRate: float = Receiver.failCount / Transmitter.messageCount
         print(f"Fail rate: {failRate * 100:.3f}%")
 
@@ -21,6 +22,8 @@ class Transmitter(ErrorChecker):
 
     @staticmethod
     def generateMessages(count: int = 10000):  # Count is the number of messages to generate, default 10,000
+        if count < 1:
+            raise ValueError("Message count must be positive")
         Transmitter.messageCount = count
         for i in range(0, Transmitter.messageCount):  # Generate inputted number of messages total
             message = randint(0, 255)  # Choose random 8-bit binary number (integer from 0-255)
@@ -68,8 +71,8 @@ class NoisyChannel(ErrorChecker):
     garbledMessages: list[str] = []
 
     @staticmethod
-    def setNoiseLevel():
-        NoisyChannel.noiseLevel = randint(0, 100)
+    def setNoiseLevel(noise: int = randint(0, 100)):
+        NoisyChannel.noiseLevel = noise
 
     @staticmethod
     def bitFlipper(messages: list[str]):
@@ -111,8 +114,8 @@ class Receiver(ErrorChecker):
     @staticmethod
     def badMessage(index: int):
         Receiver.failCount += 1
-        newMessage = Transmitter.getNewMessage(index)
-        Receiver.analyzeSingleMessage(newMessage, index)
+        # newMessage = Transmitter.getNewMessage(index)
+        # Receiver.analyzeSingleMessage(newMessage, index)
 
     @staticmethod
     def analyzeMessages(messages: list[str]):
@@ -126,8 +129,9 @@ class Receiver(ErrorChecker):
         ackBit = message[8]
         if ackBit == "1":
             Receiver.badMessage(index)
+            return
         messageData = message[:8]
-        checksum = [9]
+        checksum = message[9]
         expectedChecksum = Transmitter.createChecksumSingle(messageData)
         if expectedChecksum and checksum == "1":
             Receiver.goodMessage(message)
@@ -135,3 +139,4 @@ class Receiver(ErrorChecker):
             Receiver.goodMessage(message)
         else:
             Receiver.badMessage(index)
+        pass
