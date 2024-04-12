@@ -3,7 +3,6 @@ __author__ = "Sam Danforth"
 from errorChecker import *
 
 
-# TODO: Create ErrorChecker class if time permits
 def main():
     messages = Transmitter.generateMessages()
     messages = Transmitter.creatChecksums(messages)
@@ -14,4 +13,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()  # Do not run, will throw RecursionError
+    main()
