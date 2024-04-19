@@ -6,9 +6,11 @@ from customErrors import ArgumentOutOfRangeError
 
 class ErrorChecker:
     """Static class containing other classes and methods for binary message error checking process"""
+    # TODO: Check for false/true good/bad messages in an evaluator
+    # TODO: Create evaluator class
     # Generate report for error checking
     @staticmethod
-    def calculateSuccess() -> None:
+    def createReport() -> None:
         print(f"Noise level used: {NoisyChannel.noiseLevel}%\n")
         print(f"Number of bad messages detected: {Receiver.failCount}")
         print(f"Number of requests for new messages: {Receiver.correctedMessages}\n")
