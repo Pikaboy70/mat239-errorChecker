@@ -6,18 +6,6 @@ from customErrors import ArgumentOutOfRangeError
 
 class ErrorChecker:
     """Static class containing other classes and methods for binary message error checking process"""
-    # TODO: Check for false/true good/bad messages in an evaluator
-    # TODO: Create evaluator class
-    # Generate report for error checking
-    @staticmethod
-    def createReport() -> None:
-        print(f"Noise level used: {NoisyChannel.noiseLevel}%\n")
-        print(f"Number of bad messages detected: {Receiver.failCount}")
-        print(f"Number of requests for new messages: {Receiver.correctedMessages}\n")
-        print(f"Number of accepted messages: {Receiver.acceptedMessages}")
-        print(f"Total number of messages generated: {Transmitter.messageCount}\n")
-        failRate: float = Receiver.failCount / Transmitter.messageCount
-        print(f"Fail rate: {failRate * 100:.2f}%")
 
 
 class Transmitter(ErrorChecker):
@@ -31,7 +19,7 @@ class Transmitter(ErrorChecker):
     @staticmethod
     def generateMessages(count: int = 10000) -> list[str]:
         if count < 1:  # Check for valid input (must be a natural number)
-            raise ValueError("Message count must be positive")
+            raise ValueError("Message count must be positive and more than 0")
         Transmitter.messageCount = count  # Update class variable
         for i in range(0, Transmitter.messageCount):
             message = randint(0, 255)  # Choose random 8-bit binary number (integer from 0-255)
@@ -85,7 +73,9 @@ class NoisyChannel(ErrorChecker):
     garbledMessages: list[str] = []
 
     @staticmethod
-    def setNoiseLevel(noise: int = randint(0, 100)) -> None:
+    def setNoiseLevel(noise: int = randint(0, 50)) -> None:
+        if noise is not int:
+            raise TypeError("Must pass in an integer")
         if 0 <= noise <= 100:
             NoisyChannel.noiseLevel = noise
         else:
@@ -123,24 +113,36 @@ class NoisyChannel(ErrorChecker):
 
 class Receiver(ErrorChecker):
     """Receives messages after going through channel, determines if they are good or bad messages"""
-    acceptedMessages: int = 0
-    correctedMessages: int = 0
-    failCount: int = 0
 
     # Increments counter tracking how many messages were accepted immediately
     @staticmethod
-    def goodMessage(message: str) -> None:
-        Receiver.acceptedMessages += 1
+    def goodMessage(message: str, index: int) -> None:
+        Evaluator.acceptedMessages += 1
+        Evaluator.goodMessages.append(message)
+        if Evaluator.falseOrTrueGood(message, index):  # Send message to evaluator
+            Evaluator.trueGood.append(message)
+        else:
+            Evaluator.falseGood.append(message)
 
     # Gets new message from transmitter, determines if bad again or not
-    # Increment counter of how many times a new message was requested
     @staticmethod
-    def badMessage(index: int) -> None:
+    def requestNewMessage(index: int) -> None:
         newMessage: str = Transmitter.getNewMessage(index)
         isGood: bool = Receiver.analyzeSingleMessage(newMessage)
-        Receiver.correctedMessages += 1
+        Evaluator.correctedMessages += 1
         if not isGood:
-            Receiver.badMessage(index)
+            Receiver.requestNewMessage(index)
+
+    # Increment counter of how many times a new message was requested
+    @staticmethod
+    def badMessage(message: str, index: int) -> None:
+        Evaluator.badMessages.append(message)
+        isBad: bool = Evaluator.falseOrTrueBad(message, index)
+        if isBad:
+            Evaluator.trueBad.append(message)
+            Receiver.requestNewMessage(index)
+        else:
+            Evaluator.falseBad.append(message)
 
     # Determine how many messages in a list have accurate checksums
     @staticmethod
@@ -150,10 +152,9 @@ class Receiver(ErrorChecker):
         for message in messages:
             isGood = Receiver.analyzeSingleMessage(message)
             if isGood:
-                Receiver.goodMessage(message)
+                Receiver.goodMessage(message, index)
             else:
-                Receiver.failCount += 1
-                Receiver.badMessage(index)
+                Receiver.badMessage(message, index)
             index += 1
 
     # Create checksum for message received and compare to the checksum bit of the message
@@ -171,3 +172,57 @@ class Receiver(ErrorChecker):
             return True
         else:
             return False
+
+
+class Evaluator(ErrorChecker):
+    """Evaluates performance of the error checking process"""
+    acceptedMessages: int = 0  # Good, including false good
+    correctedMessages: int = 0  # Number of times a new message was requested
+    goodMessages: list[str] = []  # Includes false good
+    trueGood: list[str] = []
+    falseGood: list[str] = []
+    badMessages: list[str] = []  # Includes false bad
+    trueBad: list[str] = []
+    falseBad: list[str] = []
+
+    # Generate report of the error checker
+    @staticmethod
+    def createReport() -> None:
+        trueGoodRate: float = (len(Evaluator.trueGood) / Transmitter.messageCount) * 100
+        falseGoodRate: float = (len(Evaluator.falseGood) / Transmitter.messageCount) * 100
+        trueBadRate: float = (len(Evaluator.trueBad) / Transmitter.messageCount) * 100
+        falseBadRate: float = (len(Evaluator.falseBad) / Transmitter.messageCount) * 100
+        acceptanceRate: float = (Evaluator.acceptedMessages / Transmitter.messageCount) * 100
+        errorDetectionRate: float = (len(Evaluator.badMessages) / Transmitter.messageCount) * 100
+
+        print(f"Noise level used: {NoisyChannel.noiseLevel}%")
+        print(f"Total number of messages generated: {Transmitter.messageCount}\n")
+        print(f"Number of bad messages detected: {len(Evaluator.badMessages)} ({errorDetectionRate:.2f}%)")
+        print(f"Number of requests for new messages: {Evaluator.correctedMessages}\n")
+        print(f"Number of true bad: {len(Evaluator.trueBad)} ({trueBadRate:.2f}%)")
+        print(f"Number of false bad: {len(Evaluator.falseBad)} ({falseBadRate:.2f}%)\n")
+        print(f"Number of accepted messages: {Evaluator.acceptedMessages} ({acceptanceRate:.2f}%)")
+        print(f"Number of true good: {len(Evaluator.trueGood)} ({trueGoodRate:.2f}%)")
+        print(f"Number of false good {len(Evaluator.falseGood)} ({falseGoodRate:.2f}%)")
+
+    # Checks if good message is a true good message
+    @staticmethod
+    def falseOrTrueGood(message: str, index: int) -> bool:
+        expectedMessage = Transmitter.preppedMessages[index]
+        expectedMessage = expectedMessage[:8]
+        receivedMessage = message[:8]
+        if expectedMessage == receivedMessage:
+            return True
+        else:
+            return False
+
+    # Detects if bad message is an error
+    @staticmethod
+    def falseOrTrueBad(message: str, index: int) -> bool:
+        expectedMessage = Transmitter.preppedMessages[index]
+        receivedMessage = message[:8]
+        expectedMessage = expectedMessage[:8]
+        if expectedMessage == receivedMessage:
+            return False
+        else:
+            return True
