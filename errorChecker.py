@@ -74,7 +74,7 @@ class NoisyChannel(ErrorChecker):
 
     @staticmethod
     def setNoiseLevel(noise: int = randint(0, 50)) -> None:
-        if noise is not int:
+        if type(noise) is not int:
             raise TypeError("Must pass in an integer")
         if 0 <= noise <= 100:
             NoisyChannel.noiseLevel = noise
